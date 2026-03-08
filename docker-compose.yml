@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:14-alpine
+    container_name: edr_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: edr_user
+      POSTGRES_PASSWORD: edr_password
+      POSTGRES_DB: edr_db
+    ports:
+      - "5435:5432"
+    volumes:
+      - edr_postgres_data:/var/lib/postgresql/data 
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.0
+    container_name: edr_events
+    restart: always
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ports:
+      - "9200:9200"
+    volumes:
+      - edr_elastic_data:/usr/share/elasticsearch/data
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.11.0 
+    container_name: edr_kibana
+    ports:
+      - "5601:5601"
+    environment:
+      - ELASTICSEARCH_HOSTS=http://edr_events:9200
+    depends_on:
+      - elasticsearch
+
+volumes:
+  edr_postgres_data:
+  edr_elastic_data:
